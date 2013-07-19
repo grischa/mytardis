@@ -1,0 +1,4 @@
+[submodule "tardis/apps/synch_squash_parser"]
+	path = tardis/apps/synch_squash_parser
+	url = https://github.com/grischa/synch-squash-parser.git
+	branch = master

@@ -365,6 +365,7 @@ class MyTServerInterface(ServerInterface):
             request=fake_request,
             authMethod=None)  # checks all available methods
         if user and user.is_authenticated():
+            user.epn_list = fake_request.session.get('_epn_list', [])
             self.username = username
             self.user = user
             return AUTH_SUCCESSFUL

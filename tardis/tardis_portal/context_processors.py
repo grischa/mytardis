@@ -50,3 +50,12 @@ def global_contexts(request):
     sponsored_by = getattr(settings, 'SPONSORED_TEXT', None)
     return {'site_title': site_title,
             'sponsored_by': sponsored_by}
+
+def google_analytics(request):
+    '''
+    adds context for portal_template.html
+    '''
+    ga_id = getattr(settings, 'GOOGLE_ANALYTICS_ID', '')
+    ga_host = getattr(settings, 'GOOGLE_ANALYTICS_HOST', '')
+    return {'ga_id': ga_id,
+            'ga_host': ga_host}

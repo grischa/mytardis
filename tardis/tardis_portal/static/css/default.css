@@ -27,6 +27,14 @@ body {
   padding-right: 0px;
 }
 
+.navbar-inner {
+  background: url('/static/images/synch-banner.png') top left #010a11 no-repeat
+}
+
+.navbar .nav > li > a {
+  color: #EBEBEB;
+}
+
 /* Clickable Experiments & Datasets */
 .clickable-tile {
 	cursor: pointer;
