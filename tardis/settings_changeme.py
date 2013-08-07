@@ -2,8 +2,7 @@ import djcelery
 from datetime import timedelta
 from os import path
 
-# MUST change this to False for any serious use.
-DEBUG = True
+DEBUG = False
 
 TEMPLATE_DEBUG = DEBUG
 
@@ -252,6 +251,7 @@ INSTALLED_APPS = (
     'bootstrapform',
     'mustachejs',
     'tastypie',
+    'rest_framework',
     # these optional apps, may require extra settings
     'tardis.apps.publication_forms',
     'tardis.apps.oaipmh',
@@ -608,6 +608,11 @@ RAPID_CONNECT_CONFIG['aud'] = 'https://example.com/rc/'
 Rapid Connect.
 '''
 
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': (
+        'tardis.tardis_portal.rest_api.permissions.MyTardisPermissions',
+    ),
+}
 
 # Example settings for the publication form workflow. Also requires the
 # corresponding app in 'INSTALLED_APPS' and the corresponding task to be

@@ -253,6 +253,7 @@ display_urls = patterns(
 )
 
 # # API SECTION
+# # V1 (tastypie)
 from tardis.tardis_portal.api import DatasetParameterSetResource
 from tardis.tardis_portal.api import DatasetParameterResource
 from tardis.tardis_portal.api import DatasetResource
@@ -287,9 +288,13 @@ v1_api.register(SchemaResource())
 v1_api.register(StorageBoxResource())
 v1_api.register(UserResource())
 v1_api.register(ObjectACLResource())
+# # V2 (django rest framework)
+from tardis.tardis_portal.rest_api.urls import rest_api_urls as v2_api_urls
+# # Common section
 api_urls = patterns(
     '',
-    (r'^', include(v1_api.urls)),
+    (r'^v2/', include(v2_api_urls)),
+    (r'^v1/', include(v1_api.urls)),
 )
 # # END API SECTION
 
