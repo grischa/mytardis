@@ -1,6 +1,11 @@
+from rest_framework import status
 from rest_framework import viewsets
+from rest_framework.decorators import link
+from rest_framework.response import Response
 
 from django.contrib.auth.models import User
+from django.core.servers.basehttp import FileWrapper
+from django.http import StreamingHttpResponse
 
 from tardis.tardis_portal.models import DatafileParameter
 from tardis.tardis_portal.models import DatafileParameterSet
@@ -75,6 +80,25 @@ class Dataset_FileViewSet(viewsets.ModelViewSet):
         from tardis.tardis_portal.auth.decorators import \
             get_accessible_datafiles_for_user
         return get_accessible_datafiles_for_user(self.request)
+
+    @link()
+    def download(self, request, pk):
+        try:
+            datafile = Dataset_File.objects.get(pk=pk)
+        except Dataset_File.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        if not request.user.has_perm('tardis_acls.view_dataset_file',
+                                     datafile):
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+        file_object = datafile.get_file()
+        wrapper = FileWrapper(file_object)
+        response = StreamingHttpResponse(
+            wrapper, content_type=datafile.mimetype)
+        response['Content-Length'] = datafile.size
+        response['Content-Disposition'] = 'attachment; filename="%s"' % \
+                                          datafile.filename
+        response['X-Accel-Buffering'] = 'no'
+        return response
 
 
 class ExperimentViewSet(viewsets.ModelViewSet):
