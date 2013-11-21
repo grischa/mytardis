@@ -1,4 +1,4 @@
 [submodule "tardis/apps/jolecule"]
 	path = tardis/apps/jolecule
 	url = git@github.com:grischa/mytardis-jolecule.git
-        ignore = dirty
+	ignore = dirty
