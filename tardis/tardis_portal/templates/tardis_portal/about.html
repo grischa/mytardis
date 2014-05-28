@@ -1,6 +1,26 @@
 {% extends "tardis_portal/portal_template.html" %}
-
+{% load static from staticfiles %}
 {% block content %}
+
+ <div class="page-header">
+   <h1 class="title">About Store.Synchrotron</h1>
+ </div>
+ <div class="row-fluid">
+ <div class="span12">
+    <p>Store.Synchrotron is a fully functional, cloud computing based solution to raw X-ray data archival and dissemination at the Australian Synchrotron, largest stand-alone piece of scientific infrastructure in the southern hemisphere. Store.Synchrotron represents the logical extension of a long-standing effort in the macromolecular crystallography community to ensure that satisfactory evidence is provided to support the interpretation of structural experiments.</p>
+
+    <img src="{% static 'images/storesync/storesync_figure.png' %}">
+
+    <p>The service automatically receives and archives raw diffraction data, related metadata and preliminary results of automated data processing workflows. Synchrotron users can securely and privately access data collected at the Australian Synchrotron and share it with collaborators. Raw data is able to be opened to the public, and associated with a research publication and Protein Data Bank output. Store.Synchrotron connects to the Australian Synchrotron's proposal and scheduling databases, easing description and organisation of users' data.</p>
+
+    <p>The Store.Synchrotron service is built on the <strong>MyTardis</strong> data management system. (<a href="http://mytardis.org">mytardis.org</a>)</p>
+
+    <p>The following manuscript has been submitted and is pending review:
+      <blockquote>Meyer GR, Aragao D, Mudie NJ, Caradoc-Davies TT, McGowan S, Bertling PJ, Groenewegen D, Quenette SM, Bond CS, Buckle AM, Androulakis S. (Submitted 2014) Operation of the Australian Store.Synchrotron for Macromolecular Crystallography. Acta Crystallogr D Biol Crystallogr.<blockquote></p>
+
+    </div>
+  </div>
+
   <div class="page-header">
 		<h1 class="title">Project Development</h1>
   </div>
