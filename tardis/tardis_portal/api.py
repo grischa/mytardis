@@ -76,7 +76,7 @@ class MyTardisAuthentication(object):
     custom tastypie authentication that works with both anonymous use and
     a number of available auth mechanisms.
     '''
-    def is_authenticated(self, request, **kwargs):
+    def is_authenticated(self, request, **kwargs):  # noqa # too complex
         '''
         handles backends explicitly so that it can return False when
         credentials are given but wrong and return Anonymous User when
@@ -128,7 +128,7 @@ default_authentication = MyTardisAuthentication()
 class ACLAuthorization(Authorization):
     '''Authorisation class for Tastypie.
     '''
-    def read_list(self, object_list, bundle):
+    def read_list(self, object_list, bundle):  # noqa # too complex
         if bundle.request.user.is_authenticated() and \
            bundle.request.user.is_superuser:
             return object_list
@@ -194,7 +194,7 @@ class ACLAuthorization(Authorization):
         else:
             return []
 
-    def read_detail(self, object_list, bundle):
+    def read_detail(self, object_list, bundle):  # noqa # too complex
         if bundle.request.user.is_authenticated() and \
            bundle.request.user.is_superuser:
             return True
@@ -239,7 +239,7 @@ class ACLAuthorization(Authorization):
     def create_list(self, object_list, bundle):
         raise NotImplementedError(type(bundle.obj))
 
-    def create_detail(self, object_list, bundle):
+    def create_detail(self, object_list, bundle):  # noqa # too complex
         if not bundle.request.user.is_authenticated():
             return False
         if bundle.request.user.is_authenticated() and \
@@ -344,7 +344,7 @@ class ACLAuthorization(Authorization):
 
         # return allowed
 
-    def update_detail(self, object_list, bundle):
+    def update_detail(self, object_list, bundle):  # noqa # too complex
         if not bundle.request.user.is_authenticated():
             return False
         if type(bundle.obj) == Experiment:
@@ -588,6 +588,7 @@ class ExperimentResource(MyTardisModelResource):
     class Meta(MyTardisModelResource.Meta):
         queryset = Experiment.objects.all()
         filtering = {
+            'id': ('exact', ),
             'title': ('exact',),
         }
 
@@ -727,6 +728,7 @@ class DatasetResource(MyTardisModelResource):
         queryset = Dataset.objects.all()
         filtering = {
             'id': ('exact', ),
+            'experiments': ALL_WITH_RELATIONS,
             'description': ('exact', ),
             'directory': ('exact', ),
         }
