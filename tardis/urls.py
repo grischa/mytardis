@@ -294,7 +294,7 @@ from tardis.tardis_portal.rest_api.urls import rest_api_urls as v2_api_urls
 api_urls = patterns(
     '',
     (r'^v2/', include(v2_api_urls)),
-    (r'^v1/', include(v1_api.urls)),
+    (r'^', include(v1_api.urls)),
 )
 # # END API SECTION
 
