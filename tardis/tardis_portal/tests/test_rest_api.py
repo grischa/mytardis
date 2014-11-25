@@ -19,7 +19,7 @@ from tardis.tardis_portal.auth.authservice import AuthService
 from tardis.tardis_portal.auth.localdb_auth import django_user
 from tardis.tardis_portal.models import ObjectACL
 from tardis.tardis_portal.models import UserProfile
-from tardis.tardis_portal.models.datafile import Dataset_File
+from tardis.tardis_portal.models.datafile import DataFile
 from tardis.tardis_portal.models.dataset import Dataset
 from tardis.tardis_portal.models.experiment import Experiment
 from tardis.tardis_portal.models.parameters import ExperimentParameter

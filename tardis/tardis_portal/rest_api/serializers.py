@@ -12,14 +12,14 @@ from tardis.tardis_portal.models import DatafileParameterSet
 from tardis.tardis_portal.models import Dataset
 from tardis.tardis_portal.models import DatasetParameter
 from tardis.tardis_portal.models import DatasetParameterSet
-from tardis.tardis_portal.models import Dataset_File
+from tardis.tardis_portal.models import DataFile
 from tardis.tardis_portal.models import Experiment
 from tardis.tardis_portal.models import ExperimentParameter
 from tardis.tardis_portal.models import ExperimentParameterSet
 from tardis.tardis_portal.models import ObjectACL
 from tardis.tardis_portal.models import ParameterName
-from tardis.tardis_portal.models import Replica
 from tardis.tardis_portal.models import Schema
+from tardis.tardis_portal.models import StorageBox
 from tardis.tardis_portal.models import Token
 
 
@@ -77,9 +77,9 @@ class DatasetParameterSetSerializer(RenamedURLHyperlinkedModelSerializer):
         model = DatasetParameterSet
 
 
-class Dataset_FileSerializer(RenamedURLHyperlinkedModelSerializer):
+class DataFileSerializer(RenamedURLHyperlinkedModelSerializer):
     class Meta:
-        model = Dataset_File
+        model = DataFile
 
 
 class ExperimentSerializer(RenamedURLHyperlinkedModelSerializer):
@@ -117,14 +117,14 @@ class ParameterNameSerializer(RenamedURLHyperlinkedModelSerializer):
         model = ParameterName
 
 
-class ReplicaSerializer(RenamedURLHyperlinkedModelSerializer):
-    class Meta:
-        model = Replica
-
-
 class SchemaSerializer(RenamedURLHyperlinkedModelSerializer):
     class Meta:
         model = Schema
+
+
+class StorageBoxSerializer(RenamedURLHyperlinkedModelSerializer):
+    class Meta:
+        model = StorageBox
 
 
 class TokenSerializer(RenamedURLHyperlinkedModelSerializer):

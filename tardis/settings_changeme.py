@@ -146,6 +146,7 @@ TEMPLATE_LOADERS = (
     'tardis.template.loaders.app_specific.Loader',
     'django.template.loaders.app_directories.Loader',
     'django.template.loaders.filesystem.Loader',
+    'django.template.loaders.eggs.Loader',
 )
 
 

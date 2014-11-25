@@ -11,15 +11,15 @@ router.register(r'datafile_paramter_set', views.DatafileParameterSetViewSet)
 router.register(r'dataset', views.DatasetViewSet)
 router.register(r'dataset_parameter', views.DatasetParameterViewSet)
 router.register(r'dataset_parameter_set', views.DatasetParameterSetViewSet)
-router.register(r'dataset_file', views.Dataset_FileViewSet)
+router.register(r'datafile', views.DataFileViewSet)
 router.register(r'experiment', views.ExperimentViewSet)
 router.register(r'experiment_parameter', views.ExperimentParameterViewSet)
 router.register(r'experiment_parameter_set',
                 views.ExperimentParameterSetViewSet)
 router.register(r'object_acl', views.ObjectACLViewSet)
 router.register(r'parameter_name', views.ParameterNameViewSet)
-router.register(r'replica', views.ReplicaViewSet)
 router.register(r'schema', views.SchemaViewSet)
+router.register(r'storage_box', views.StorageBoxViewSet)
 router.register(r'token', views.TokenViewSet)
 
 # Wire up our API using automatic URL routing.
