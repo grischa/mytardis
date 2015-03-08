@@ -2,7 +2,8 @@ import djcelery
 from datetime import timedelta
 from os import path
 
-DEBUG = False
+# MUST change this to False for any serious use.
+DEBUG = True
 
 TEMPLATE_DEBUG = DEBUG
 
@@ -146,7 +147,6 @@ TEMPLATE_LOADERS = (
     'tardis.template.loaders.app_specific.Loader',
     'django.template.loaders.app_directories.Loader',
     'django.template.loaders.filesystem.Loader',
-    'django.template.loaders.eggs.Loader',
 )
 
 
