@@ -1,7 +1,6 @@
 from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.decorators import detail_route
-from rest_framework.decorators import link
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.response import Response
 
@@ -94,7 +93,8 @@ class DataFileViewSet(viewsets.ModelViewSet):
             get_accessible_datafiles_for_user
         return get_accessible_datafiles_for_user(self.request)
 
-    @link()
+    @detail_route(methods=['get'],
+                  permission_classes=[DjangoObjectPermissions])
     def download(self, request, pk):
         try:
             datafile = DataFile.objects.get(pk=pk)

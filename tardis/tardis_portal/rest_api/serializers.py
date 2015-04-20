@@ -85,7 +85,7 @@ class DataFileSerializer(RenamedURLHyperlinkedModelSerializer):
 class ExperimentSerializer(RenamedURLHyperlinkedModelSerializer):
     class Meta:
         model = Experiment
-        fields = ('uri', 'url',
+        fields = ('url',
                   # 'approved',
                   'title',
                   'institution_name', 'description',
