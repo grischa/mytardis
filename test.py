@@ -14,11 +14,13 @@ if __name__ == "__main__":
     pylint = subprocess.Popen(
         ['pylint', '--rcfile=.pylintrc', '-j', '2', 'tardis'],
         stdout=subprocess.PIPE)
-    pylint_output = True
+    pylint_happy = True
     for output in pylint.stdout:
-        if pylint_output:
+        if pylint_happy:
             print("pylint results")
-            pylint_output = False
+            pylint_happy = False
         print output,
-    if pylint_output:
+    if pylint_happy:
         print("pylint is happy")
+    else:
+        sys.exit(1)
