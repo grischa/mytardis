@@ -3,10 +3,10 @@ import string
 
 import datetime
 
-from django.contrib.contenttypes.models import ContentType
 from hypothesis.strategies import lists, text
 
 from django.contrib.auth.models import User
+from django.contrib.contenttypes.models import ContentType
 from django.test import Client, TestCase
 
 from tardis.tardis_portal.models import (Dataset, Experiment, ExperimentAuthor,
