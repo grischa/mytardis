@@ -18,9 +18,9 @@ from tardis.tardis_portal.models import (Dataset, Experiment, ExperimentAuthor,
 # some constants
 exp_num = 50
 authors_per_exp = 6
-ds_per_exp = 50
+ds_per_exp = 30
 files_per_ds = 50
-time_limit = 3.0
+time_limit = 3.5
 
 
 class ExperimentListingViewTestCase(TestCase):
