@@ -4,10 +4,7 @@ import string
 import datetime
 
 from django.contrib.contenttypes.models import ContentType
-from django.db import transaction
-from hypothesis import given, settings
-from hypothesis.extra.django.models import models
-from hypothesis.strategies import lists, just, text, data, integers
+from hypothesis.strategies import lists, text
 
 from django.contrib.auth.models import User
 from django.test import Client, TestCase
