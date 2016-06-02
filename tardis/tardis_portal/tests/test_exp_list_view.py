@@ -1,7 +1,9 @@
+import random
 import string
 
 import datetime
 
+from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
 from hypothesis import given, settings
 from hypothesis.extra.django.models import models
@@ -11,32 +13,14 @@ from django.contrib.auth.models import User
 from django.test import Client, TestCase
 
 from tardis.tardis_portal.models import (Dataset, Experiment, ExperimentAuthor,
-                                         DataFile)
+                                         DataFile, ObjectACL)
 
 # some constants
-exp_num = 8
-ds_per_exp = 6
-time_limit = 4.0
-
-
-# set up hypothesis generators (data is not being created)
-def experiments(user):
-    # self.experiments = lists(models(Experiment, created_by=just(self.user)),
-    #                          min_size=exp_num, max_size=exp_num)
-    datasets = lists(models(Dataset),
-                     min_size=exp_num * ds_per_exp,
-                     max_size=exp_num * ds_per_exp)
-    for i in range(exp_num):
-        lists(models(Dataset), min_size=ds_per_exp,
-              max_size=ds_per_exp).map(lambda ds: ds.experiments.add(
-              models(Experiment, created_by=just(user)).example()
-        ))
-        # self.experiments.flatmap(lambda x: x)
-        #     # for ds in self.datasets[ds_per_exp * i:ds_per_exp * (i + 1)]:
-        #     #     e.dataset.add(ds)
-        # self.experiment = models(
-        #     Experiment, created_by=just(self.user)).example()
-    return datasets
+exp_num = 50
+authors_per_exp = 6
+ds_per_exp = 50
+files_per_ds = 50
+time_limit = 3.0
 
 
 class ExperimentListingViewTestCase(TestCase):
@@ -55,34 +39,56 @@ class ExperimentListingViewTestCase(TestCase):
         logged_in = self.client.login(username=self.user.username,
                                       password=self.password)
         self.assertTrue(logged_in)
-
-    @given(data())
-    @settings(max_examples=1, timeout=120)
-    def test_experiment_list(self, d):
-        # import ipdb; ipdb.set_trace()
-        exps = d.draw(lists(models(
-            Experiment,
-            created_by=just(self.user)),
-            min_size=exp_num,
-            max_size=exp_num))
-        datasets = d.draw(lists(models(Dataset), min_size=ds_per_exp * exp_num,
-                                max_size=ds_per_exp * exp_num))
-        for i, e in enumerate(exps):
-            for ds in datasets[i * ds_per_exp:(i + 1) * ds_per_exp]:
+        new_exps = []
+        for i in range(exp_num):
+            desc = text().example()
+            new_exps.append(Experiment(description=desc,
+                                       created_by=self.user))
+        Experiment.objects.bulk_create(new_exps)
+        new_dss = []
+        for i in range(exp_num * ds_per_exp):
+            new_dss.append(Dataset(description=text().example()))
+        Dataset.objects.bulk_create(new_dss)
+        authors = []
+        author_names = lists(text(), min_size=authors_per_exp,
+                             max_size=authors_per_exp, unique=True).example()
+        oacls = []
+        for i, e in enumerate(Experiment.objects.all().iterator()):
+            for ds in Dataset.objects.all()[
+                      i * ds_per_exp:(i + 1) * ds_per_exp]:
                 ds.experiments.add(e)
-            d.draw(lists(models(ExperimentAuthor, experiment=just(e)),
-                         min_size=2, max_size=5))
-        for ds in datasets:
-            dfs = d.draw(lists(models(DataFile, dataset=just(ds),
-                                      size=integers(min_value=0),
-                                      md5sum=text(
-                                          min_size=32, max_size=32),
-                                      mimetype=just('image/jpeg')),
-                               min_size=3, max_size=5))
-        self.assertEqual(len(exps), exp_num)
-        self.assertEqual(len(datasets), exp_num * ds_per_exp)
+            for j, a in enumerate(author_names):
+                authors.append(ExperimentAuthor(experiment=e,
+                                                author=a,
+                                                order=j))
+            oacls.append(ObjectACL(
+                pluginId ='django_user',
+                entityId=self.user.id,
+                content_type=ContentType.objects.get_for_model(Experiment),
+                object_id=e.id,
+                canRead=True,
+                canWrite=True,
+                isOwner=random.choice([True, False])
+            ))
+        ObjectACL.objects.bulk_create(oacls)
+        ExperimentAuthor.objects.bulk_create(authors)
+        datafiles = []
+        for ds in Dataset.objects.all().iterator():
+            for i in range(files_per_ds):
+                datafiles.append(DataFile(
+                    filename="testfile.test",
+                    dataset=ds,
+                    size=12345,
+                    md5sum="123456789abcdef0123456789abcdef" * 2,
+                    mimetype=random.choice(['text/plain', 'image/jpeg'])))
+        DataFile.objects.bulk_create(datafiles)
 
     def test_mydata_page_timing(self):
+        self.assertEqual(Experiment.objects.all().count(), exp_num)
+        self.assertEqual(Dataset.objects.all().count(), exp_num * ds_per_exp)
+        self.assertEqual(DataFile.objects.all().count(),
+                         exp_num * ds_per_exp * files_per_ds)
+
         start = datetime.datetime.now()
         mydata_page = self.client.get('/mydata/')
         duration = datetime.datetime.now() - start

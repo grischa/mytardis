@@ -5,6 +5,7 @@ from django.forms.models import model_to_dict
 from django.template.defaultfilters import pluralize, filesizeformat
 from django.contrib.humanize.templatetags.humanize import naturalday
 
+from tardis.tardis_portal.models.datafile import DataFile, IMAGE_FILTER
 from tardis.tardis_portal.util import render_mustache
 from tardis.tardis_portal.views import get_dataset_info
 from tardis.tardis_portal.models.dataset import Dataset
@@ -94,3 +95,8 @@ def dataset_size_badge(dataset=None, size=None):
         'title': "Dataset size is ~%s" % size,
         'label': size,
     })
+
+@register.assignment_tag
+def get_dataset_images(dataset_id, limit=None):
+    return DataFile.objects.filter(dataset__id=dataset_id).filter(
+        IMAGE_FILTER).order_by('filename')[:limit]

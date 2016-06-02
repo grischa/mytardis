@@ -397,3 +397,10 @@ def choose_rights(request, experiment_id):
     c = {'form': form, 'experiment': experiment}
     return HttpResponse(render_response_index(request,
                         'tardis_portal/ajax/choose_rights.html', c))
+
+
+@authz.experiment_access_required
+def experiment_badges(request, experiment_id):
+    c = {'exp': Experiment.objects.get(id=experiment_id)}
+    return HttpResponse(render_response_index(
+        request, 'tardis_portal/ajax/experiment_badges.html', c))

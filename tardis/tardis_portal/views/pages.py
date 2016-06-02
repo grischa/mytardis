@@ -345,16 +345,18 @@ def about(request):
 
 @login_required
 def my_data(request):
-    '''
+    """
     show data with credential-based access
     delegate to custom views depending on settings
-    '''
+    """
+
+    def annotate_query(base):
+        return base(request.user).order_by('-update_time').prefetch_related(
+            'experimentauthor_set')
 
     c = {
-        'owned_experiments': Experiment.safe.owned(request.user)
-        .order_by('-update_time'),
-        'shared_experiments': Experiment.safe.shared(request.user)
-        .order_by('-update_time'),
+        'owned_experiments': annotate_query(Experiment.safe.owned),
+        'shared_experiments': annotate_query(Experiment.safe.shared),
     }
     return HttpResponse(render_response_index(
         request, 'tardis_portal/my_data.html', c))

@@ -223,6 +223,8 @@ ajax_urls = patterns(
     (r'^experiment/(?P<experiment_id>\d+)/share$', 'share'),
     (r'^experiment/(?P<experiment_id>\d+)/dataset-transfer$',
      'experiment_dataset_transfer'),
+    url(r'^experiment/(?P<experiment_id>\d+)/badges$', 'experiment_badges',
+        name="experiment_badges"),
     (r'^license/list$', 'retrieve_licenses'),
     (r'^json/', include(json_urls)),
     (r'^feedback/', 'feedback'),

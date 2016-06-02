@@ -1,5 +1,6 @@
 {% extends "tardis_portal/portal_template.html" %}
 {% load experiment_tags %}
+{% load dataset_tags %}
 {% load experimentstats %}
 {% load humanize %}
 {% load bleach_tag %}
@@ -60,20 +61,15 @@
 		   onclick="$('#collapse{{exp.id}}').collapse('toggle');" >
 		<strong><a class="pull-left explink"
 			   href="{% url 'tardis_portal.view_experiment' exp.id %}">{{ exp.title }}</a></strong>
-		<ul class="nav nav-pills badgelist">
-		  <li class="pull-right">
-		    {{ exp|experiment_public_access_badge }}
-		  </li>
-		  <li class="pull-right">
-		    {{ exp|experiment_datafiles_badge }}
-		  </li>
-		  <li class="pull-right">
-		    {{ exp|experiment_datasets_badge }}
-		  </li>
-		  <li class="pull-right">
-		    {{ exp|experiment_last_updated_badge }}
-		  </li>
-		</ul>
+		<div id="exp-{{ exp.id }}-owned-badge"></div>
+          <script type="text/javascript">
+              $(function() {
+                   $.get("{% url 'experiment_badges' exp.id %}",
+                   function(data) {
+                       $('#exp-{{ exp.id }}-owned-badge').append(data);
+                   }, "html");
+              });
+          </script>
 		<small>
 		  {% for author in exp.experimentauthor_set.all %}{% if not forloop.first %},
 		{% endif %}
@@ -96,34 +92,33 @@
 		 class="accordion-body collapse in">
 	      <div class="accordion-inner">
 		<p>{{exp.description|default:""|bleach}}</p>
-		{% for ds in exp.datasets.all|dictsortreversed:"id"|slice:":1" %}
-		  {% if forloop.first %}
-		    <ul class="nav nav-list">
-		      <li class="nav-header dataset-list-header">Latest dataset in this experiment</li>
-		  {% endif %}
-		  <li>
-		    <a href="{% url 'tardis_portal.view_dataset' ds.id %}"><strong>{{ ds.description }}</strong></a>
-		    {% for datafile in ds.get_images|slice:":5" %}
-		      {% if forloop.first %}
-			<ul class="thumbnails">
-		      {% endif %}
-		      <li>
-			<a class="thumbnail" href="{% url 'tardis.tardis_portal.download.view_datafile' datafile.id %}">{% url 'tardis.tardis_portal.iiif.download_image' datafile_id=datafile.id region='full' size=',50' rotation=0 quality='native' format='jpg' as thumbnail %}
-			<img alt="Thumbnail for Datafile #{{datafile.id}}"
-			     src="{{ thumbnail }}"
-			     onerror="$(this).hide()"/></a>
-		      </li>
-		      {% if forloop.last %}
-			</ul>
-		      {% endif %}
-		    {% endfor %}
-		  </li>
-		  {% if forloop.last %}
+		{% with ds=exp.datasets.first %}
+          {% if ds %}
+              <ul class="nav nav-list">
+              <li class="nav-header dataset-list-header">Latest dataset in this experiment</li>
+              <li>
+                  <a href="{% url 'tardis_portal.view_dataset' ds.id %}"><strong>{{ ds.description }}</strong></a>
+                  {% get_dataset_images ds.id limit=5 as dataset_images %}
+                  {% for datafile in dataset_images %}
+                      {% if forloop.first %}
+                          <ul class="thumbnails">
+                      {% endif %}
+                  <li>
+                      <a class="thumbnail" href="{% url 'tardis.tardis_portal.download.view_datafile' datafile.id %}">{% url 'tardis.tardis_portal.iiif.download_image' datafile_id=datafile.id region='full' size=',50' rotation=0 quality='native' format='jpg' as thumbnail %}
+                          <img alt="Thumbnail for Datafile #{{datafile.id}}"
+                               src="{{ thumbnail }}"
+                               onerror="$(this).hide()"/></a>
+                  </li>
+                  {% if forloop.last %}
+                      </ul>
+                  {% endif %}
+                  {% endfor %}
+              </li>
 		    </ul>
-		  {% endif %}
-		  {% empty %}
-		  There are no datasets in this experiment
-		{% endfor %}
+          {% else %}
+              There are no datasets in this experiment
+          {% endif %}
+        {% endwith %}
 	      </div>
 	    </div>
 	  </div>
@@ -158,17 +153,15 @@
 		 onclick="$('#collapsepub{{exp.id}}').collapse('toggle');" >
 	      <strong><a class="pull-left explink"
 			 href="{% url 'tardis_portal.view_experiment' exp.id %}">{{ exp.title }}</a></strong>
-	      <ul class="nav nav-pills badgelist">
-		<li class="pull-right">
-		  {{ exp|experiment_datafiles_badge }}
-		</li>
-		<li class="pull-right">
-		  {{ exp|experiment_datasets_badge }}
-		</li>
-		<li class="pull-right">
-		  {{ exp|experiment_last_updated_badge }}
-		</li>
-	      </ul>
+            <div id="exp-{{ exp.id }}-shared-badge"></div>
+            <script type="text/javascript">
+                $(function() {
+                    $.get("{% url 'experiment_badges' exp.id %}",
+                          function(data) {
+                              $('#exp-{{ exp.id }}-shared-badge').append(data);
+                          }, "html");
+                });
+            </script>
 	      <small>
 		{% for author in exp.experimentauthor_set.all %}{% if not forloop.first %},
                 {% endif %}
@@ -191,34 +184,33 @@
 	       class="accordion-body collapse in">
 	    <div class="accordion-inner">
 	      <p>{{exp.description|default:""|bleach}}</p>
-	      {% for ds in exp.datasets.all|dictsortreversed:"id"|slice:":1" %}
-		{% if forloop.first %}
-		  <ul class="nav nav-list">
-		{% endif %}
-		<li>
-		    <span class="pull-left" >
-		      Latest dataset in this experiment<br/>
-		      <a href="{% url 'tardis_portal.view_dataset' ds.id %}"><strong>{{ ds.description }}</strong></a>
-		    </span>
-		    {% for datafile in ds.get_images|slice:":5" %}
-		      {% if forloop.first %}
-			<ul class="thumbnails">
-		      {% endif %}
-		      <li>
-			<a class="thumbnail" href="{% url 'tardis.tardis_portal.download.view_datafile' datafile.id %}">{% url 'tardis.tardis_portal.iiif.download_image' datafile_id=datafile.id region='full' size=',50' rotation=0 quality='native' format='jpg' as thumbnail %}
-			<img alt="Thumbnail for Datafile #{{datafile.id}}"
-			     src="{{ thumbnail }}"
-			     onerror="$(this).hide()"/></a>
-		      </li>
-		      {% if forloop.last %}
-			</ul>
-		      {% endif %}
-		    {% endfor %}
-		  </li>
-		  {% if forloop.last %}
-		    </ul>
-		  {% endif %}
-		{% endfor %}
+          {% with ds=exp.datasets.first %}
+          {% if ds %}
+          <ul class="nav nav-list">
+              <li>
+                  <span class="pull-left" >
+                      Latest dataset in this experiment<br/>
+                      <a href="{% url 'tardis_portal.view_dataset' ds.id %}"><strong>{{ ds.description }}</strong></a>
+                  </span>
+                  {% get_dataset_images ds.id limit=5 as dataset_images %}
+                  {% for datafile in dataset_images %}
+                      {% if forloop.first %}
+                          <ul class="thumbnails">
+                      {% endif %}
+                  <li>
+                      <a class="thumbnail" href="{% url 'tardis.tardis_portal.download.view_datafile' datafile.id %}">{% url 'tardis.tardis_portal.iiif.download_image' datafile_id=datafile.id region='full' size=',50' rotation=0 quality='native' format='jpg' as thumbnail %}
+                          <img alt="Thumbnail for Datafile #{{datafile.id}}"
+                               src="{{ thumbnail }}"
+                               onerror="$(this).hide()"/></a>
+                  </li>
+                  {% if forloop.last %}
+                      </ul>
+                  {% endif %}
+                  {% endfor %}
+              </li>
+          </ul>
+          {% endif %}
+          {% endwith %}
 	    </div>
 	  </div>
 	</div>
