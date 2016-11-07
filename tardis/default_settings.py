@@ -699,6 +699,12 @@ Rapid Connect.
 
 MANAGE_ACCOUNT_ENABLED = True
 
+
+PUBLISHING_LEGAL_FILENAME = 'publishing_legal.txt'
+"""Filename in static files to be shown in Sharing tab publishing dialog as
+legal agreement
+"""
+
 # Example settings for the publication form workflow. Also requires the
 # corresponding app in 'INSTALLED_APPS' and the corresponding task to be
 # enabled

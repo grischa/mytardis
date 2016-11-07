@@ -394,6 +394,9 @@ def choose_rights(request, experiment_id):
         form = RightsForm({'public_access': experiment.public_access,
                            'license': experiment.license_id})
 
-    c = {'form': form, 'experiment': experiment}
+    c = {'form': form, 'experiment': experiment,
+         'publishing_legal_filename': getattr(settings,
+                                              'PUBLISHING_LEGAL_FILENAME',
+                                              'publishing_legal.txt')}
     return HttpResponse(render_response_index(request,
                         'tardis_portal/ajax/choose_rights.html', c))
