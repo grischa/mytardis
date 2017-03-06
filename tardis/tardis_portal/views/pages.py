@@ -620,7 +620,7 @@ def sftp_access(request):
     :param request: HttpRequest
     :return: HttpResponse
     """
-    from tardis.tardis_portal.download import make_mapper
+    from data_organisation.mapping_to_paths import make_mapper
     object_type = request.GET.get('object_type')
     object_id = request.GET.get('object_id')
     sftp_start_dir = ''

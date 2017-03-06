@@ -7,11 +7,13 @@ download.py
 .. moduleauthor::  Grischa Meyer <grischa.meyer@monash.edu>
 
 """
-import logging
-import urllib
-import os
 import cStringIO as StringIO
+import logging
 import time
+import urllib
+
+from tardis.data_organisation.mapping_to_paths import map_files_to_paths, \
+    PathTranslationError
 
 try:
     import zlib  # We may need its compression method
@@ -31,8 +33,6 @@ from django.core.servers.basehttp import FileWrapper
 from django.http import HttpResponseRedirect, StreamingHttpResponse
 from django.conf import settings
 from django.utils.dateformat import format as dateformatter
-from django.utils.importlib import import_module
-from django.core.exceptions import ImproperlyConfigured
 from django.contrib.auth.decorators import login_required
 
 from tardis.analytics.tracker import IteratorTracker
@@ -47,8 +47,6 @@ from tardis.tardis_portal.views import return_response_not_found, \
     return_response_error
 
 logger = logging.getLogger(__name__)
-
-DEFAULT_ORGANIZATION = settings.DEFAULT_PATH_MAPPER
 
 
 def _create_download_response(request, datafile_id, disposition='attachment'):  # too complex # noqa
@@ -119,90 +117,6 @@ def view_datafile(request, datafile_id):
 
 def download_datafile(request, datafile_id):
     return _create_download_response(request, datafile_id)
-
-
-__mapper_makers = None
-
-
-def get_download_organizations():
-    return _get_mapper_makers().keys()
-
-
-def _get_mapper_makers():
-    global __mapper_makers
-    if not __mapper_makers:
-        __mapper_makers = {}
-        mappers = getattr(settings, 'DOWNLOAD_PATH_MAPPERS', {})
-        for (organization, mapper_desc) in mappers.items():
-            mapper_fn = _safe_import(mapper_desc[0])
-            if len(mapper_desc) >= 2:
-                kwarg = mapper_desc[1]
-            else:
-                kwarg = {}
-
-            def mapper_maker_maker(kwarg):
-                def mapper_maker(rootdir):
-                    myKwarg = dict(kwarg)
-                    myKwarg['rootdir'] = rootdir
-
-                    def mapper(datafile):
-                        return mapper_fn(datafile, **myKwarg)
-                    return mapper
-                return mapper_maker
-            __mapper_makers[organization] = mapper_maker_maker(kwarg)
-    return __mapper_makers
-
-
-def _safe_import(path):
-    try:
-        dot = path.rindex('.')
-    except ValueError:
-        raise ImproperlyConfigured('%s isn\'t an archive mapper' % path)
-    mapper_module, mapper_fname = path[:dot], path[dot + 1:]
-    try:
-        mod = import_module(mapper_module)
-    except ImportError, e:
-        raise ImproperlyConfigured('Error importing mapper %s: "%s"' %
-                                   (mapper_module, e))
-    try:
-        return getattr(mod, mapper_fname)
-    except AttributeError:
-        raise ImproperlyConfigured(
-            'Mapper module "%s" does not define a "%s" function' %
-            (mapper_module, mapper_fname))
-
-
-def make_mapper(organization, rootdir):
-    if organization == 'classic':
-        return classic_mapper(rootdir)
-    else:
-        mapper_makers = _get_mapper_makers()
-        mapper_maker = mapper_makers.get(organization)
-        if mapper_maker:
-            return mapper_maker(rootdir)
-        else:
-            return None
-
-
-def classic_mapper(rootdir):
-    def _get_filename(df):
-        return os.path.join(rootdir, str(df.dataset.id), df.filename)
-    return _get_filename
-
-
-def _get_datafile_details_for_archive(mapper, datafiles):
-    # It would be simplest to do this lazily.  But if we do that, we implicitly
-    # passing the database context to the thread that will write the archive,
-    # and that is a bit dodgy.  (It breaks in unit tests!)  Instead, we
-    # populate the list eagerly, but with a file getter rather than the file
-    # itself.  If we populate with actual File objects, we risk running out
-    # of file descriptors.
-    res = []
-    for df in datafiles:
-        mapped_pathname = mapper(df)
-        if mapped_pathname:
-            res.append((df, mapper(df)))
-    return res
 
 
 class UncachedTarStream(TarFile):
@@ -389,18 +303,19 @@ class UncachedTarStream(TarFile):
 
 
 def _streaming_downloader(request, datafiles, rootdir, filename,
-                          comptype='tgz', organization=DEFAULT_ORGANIZATION):
+                          comptype='tgz', organization=None):
     '''
     private function to be called by wrappers
     creates download response with given files and names
     '''
-    mapper = make_mapper(organization, rootdir)
-    if not mapper:
+    try:
+        files = map_files_to_paths(datafiles, organization, rootdir)
+    except PathTranslationError as e:
         return render_error_message(
-            request, 'Unknown download organization: %s' % organization,
+            request,
+            'Error: %s, with file organization: %s' % (e, organization),
             status=400)
     try:
-        files = _get_datafile_details_for_archive(mapper, datafiles)
         tfs = UncachedTarStream(
             files,
             filename=filename,
@@ -430,9 +345,9 @@ def _streaming_downloader(request, datafiles, rootdir, filename,
 
 @experiment_download_required
 def streaming_download_experiment(request, experiment_id, comptype='tgz',
-                                  organization=DEFAULT_ORGANIZATION):
+                                  organization=None):
     experiment = Experiment.objects.get(id=experiment_id)
-    if settings.EXP_SPACES_TO_UNDERSCORES:
+    if getattr(settings, 'EXP_SPACES_TO_UNDERSCORES', False):
         rootdir = urllib.quote(
             experiment.title.replace(' ', '_'),
             safe=settings.SAFE_FILESYSTEM_CHARACTERS)
@@ -449,7 +364,7 @@ def streaming_download_experiment(request, experiment_id, comptype='tgz',
 
 @dataset_download_required
 def streaming_download_dataset(request, dataset_id, comptype='tgz',
-                               organization=DEFAULT_ORGANIZATION):
+                               organization=None):
     dataset = Dataset.objects.get(id=dataset_id)
     if settings.DATASET_SPACES_TO_UNDERSCORES:
         rootdir = urllib.quote(dataset.description.replace(' ', '_'),
@@ -478,10 +393,12 @@ def streaming_download_datafiles(request):  # too complex # noqa
     # TODO: handle no datafile, invalid filename, all http links
     # TODO: intelligent selection of temp file versus in-memory buffering.
     logger.error('In download_datafiles !!')
+
     comptype = getattr(settings, 'DEFAULT_ARCHIVE_FORMATS', ['tar'])[0]
-    organization = getattr(settings, 'DEFAULT_PATH_MAPPER', 'classic')
     if 'comptype' in request.POST:
         comptype = request.POST['comptype']
+
+    organization = None
     if 'organization' in request.POST:
         organization = request.POST['organization']
 
@@ -554,7 +471,7 @@ def streaming_download_datafiles(request):  # too complex # noqa
     except (KeyError, Experiment.DoesNotExist):
         experiment = iter(df_set).next().dataset.get_first_experiment()
 
-    if settings.EXP_SPACES_TO_UNDERSCORES:
+    if getattr(settings, 'EXP_SPACES_TO_UNDERSCORES', False):
         exp_title = experiment.title.replace(' ', '_')
     else:
         exp_title = experiment.title

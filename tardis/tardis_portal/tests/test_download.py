@@ -225,7 +225,7 @@ class DownloadTestCase(TestCase):
         # check download for experiment1 as tar
         response = client.get('/download/experiment/%i/tar/' %
                               self.experiment1.id)
-        if settings.EXP_SPACES_TO_UNDERSCORES:
+        if getattr(settings, 'EXP_SPACES_TO_UNDERSCORES', False):
             exp1_title = self.experiment1.title.replace(' ', '_')
         else:
             exp1_title = self.experiment1.title
@@ -331,7 +331,7 @@ class DownloadTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
 
         # check experiment2 download with '.txt' filtered out
-        if settings.EXP_SPACES_TO_UNDERSCORES:
+        if getattr(settings, 'EXP_SPACES_TO_UNDERSCORES', False):
             exp2_title = self.experiment2.title.replace(' ', '_')
         else:
             exp2_title = self.experiment2.title

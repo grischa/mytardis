@@ -71,7 +71,7 @@ class TarDownloadTestCase(TestCase):
             self.assertEqual(int(response['Content-Length']),
                              os.stat(tarfile.name).st_size)
             tf = TarFile(tarfile.name)
-            if settings.EXP_SPACES_TO_UNDERSCORES:
+            if getattr(settings, 'EXP_SPACES_TO_UNDERSCORES', False):
                 exp_title = self.exp.title.replace(' ', '_')
             else:
                 exp_title = self.exp.title

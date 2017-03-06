@@ -98,8 +98,8 @@ LDAP_BASE = 'dc=example, dc=com'
 LDAP_USER_BASE = 'ou=People, ' + LDAP_BASE
 LDAP_GROUP_BASE = 'ou=Group, ' + LDAP_BASE
 
-SYSTEM_LOG_LEVEL = logging.DEBUG
-MODULE_LOG_LEVEL = logging.DEBUG
+SYSTEM_LOG_LEVEL = logging.INFO
+MODULE_LOG_LEVEL = logging.INFO
 
 SYSTEM_LOG_FILENAME = 'request-test.log'
 MODULE_LOG_FILENAME = 'tardis-test.log'
@@ -147,7 +147,13 @@ DEFAULT_ARCHIVE_FORMATS = ['tar']
 
 AUTOGENERATE_API_KEY = True
 
-MIDDLEWARE_CLASSES += ('tardis.tardis_portal.filters.FilterInitMiddleware',)
+# MIDDLEWARE_CLASSES += ('tardis.tardis_portal.filters.FilterInitMiddleware',)
+
+MIDDLEWARE_CLASSES = [m for m in MIDDLEWARE_CLASSES
+                      if m != 'tardis.tardis_portal.logging_middleware.'
+                              'LoggingMiddleware']
+MIDDLEWARE_CLASSES.append('tardis.tardis_portal.filters.FilterInitMiddleware')
+MIDDLEWARE_CLASSES = tuple(MIDDLEWARE_CLASSES)
 
 SECRET_KEY = 'ij!%7-el^^rptw$b=iol%78okl10ee7zql-()z1r6e)gbxd3gl'
 
@@ -155,3 +161,18 @@ SESSION_SERIALIZER = 'django.contrib.sessions.serializers.PickleSerializer'
 USE_TZ = True  # apparently sqlite has issues with timezones?
 
 HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.BaseSignalProcessor'
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': True,
+    'handlers': {
+        'null': {
+            'level': 'INFO',
+            'class': 'django.utils.log.NullHandler',
+        },
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+        },
+    },
+}

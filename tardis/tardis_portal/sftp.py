@@ -5,7 +5,6 @@ SFTP Server
 # disabling import order check for monkey patching
 
 import SocketServer
-import collections
 import logging
 import os
 import stat
@@ -21,17 +20,14 @@ from paramiko import OPEN_SUCCEEDED, OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED,\
     SFTP_OP_UNSUPPORTED, SFTP_NO_SUCH_FILE
 from paramiko.common import AUTH_FAILED, AUTH_SUCCESSFUL
 
+from tardis.data_organisation.mapping_to_paths import DynamicTree
 from tardis.analytics import tracker
-from tardis.tardis_portal.download import make_mapper
-from tardis.tardis_portal.util import split_path
 
 logger = logging.getLogger(__name__)
-path_mapper = make_mapper(settings.DEFAULT_PATH_MAPPER, rootdir=None)
 
 paramiko_log = logging.getLogger('paramiko.transport')
 if not paramiko_log.handlers:
     paramiko_log.addHandler(logging.FileHandler('sftpd.log'))
-
 
 if getattr(settings, 'SFTP_GEVENT', False):
     from gevent import monkey
@@ -44,125 +40,6 @@ from django.contrib.sites.models import Site  # noqa
 from django.contrib.auth.models import AnonymousUser  # noqa
 
 from tardis.tardis_portal.models import DataFile, Experiment  # noqa
-
-
-class DynamicTree(object):
-
-    def __init__(self, host_obj=None):
-        self.name = None
-        self.obj = None  # an object if applicable
-        self.update = self.update_nothing
-        self.last_updated = None  # a time.time() number
-        self.host_obj = host_obj
-        self.children = None
-        self.clear_children()
-
-    def update_nothing(self):
-        pass
-
-    def clear_children(self):
-        self.children = collections.defaultdict(
-            lambda: DynamicTree(self.host_obj))
-
-    def add_path(self, path):
-        path = path.strip('/')
-        elems = split_path(path)
-        return self.add_path_elems(elems)
-
-    def add_path_elems(self, elems):
-        first = elems[0]
-        leaf = self.children[first]
-        leaf.name = first
-        if len(elems) > 1:
-            return leaf.add_path_elems(elems[1:])
-        return leaf
-
-    def add_child(self, name, obj=None):
-        new_child = self.children[name]
-        new_child.name = name
-        new_child.obj = obj
-
-    def get_leaf(self, path, update=False):
-        path = path.strip('/')
-        elems = collections.deque(split_path(path))
-        leaf = self.children.get(elems.popleft())
-        if leaf and update:
-            leaf.update()
-        while elems:
-            leaf = leaf.children.get(elems.popleft())
-            if leaf and update:
-                leaf.update()
-        return leaf
-
-    def update_experiments(self):
-        exps = [(path_mapper(exp), exp)
-                for exp in self.host_obj.experiments]
-        self.clear_children()
-        for exp_name, exp in exps:
-            child = self.children[exp_name]
-            child.name = exp_name
-            child.obj = exp
-            child.update = child.update_datasets
-
-    def update_datasets(self):
-        all_files_name = '00_all_files'
-        datasets = [(path_mapper(ds), ds)
-                    for ds in self.obj.datasets.all()]
-        self.clear_children()
-        for ds_name, ds in datasets:
-            if ds_name == all_files_name:
-                ds_name = '%s_dataset' % all_files_name
-            child = self.children[ds_name]
-            child.name = ds_name
-            child.obj = ds
-            child.update = child.update_dataset_files
-        child = self.children[all_files_name]
-        child.name = all_files_name
-        child.obj = self.obj
-        child.update = child.update_all_files
-
-    def update_all_files(self):
-        self.clear_children()
-        for df in DataFile.objects.filter(
-                dataset__experiments=self.obj).iterator():
-            self._add_file_entry(df)
-
-    def update_dataset_files(self):
-        self.clear_children()
-        for df in self.obj.datafile_set.all().iterator():
-            self._add_file_entry(df)
-
-    def _add_file_entry(self, datafile):
-        df_name = path_mapper(datafile)
-        # try:
-        #     file_obj = df.file_object
-        #     file_name = df_name
-        # except IOError:
-        #     file_name = df_name + "_offline"
-        #     if getattr(settings, 'DEBUG', False):
-        #         placeholder = df.file_objects.all()[0].uri
-        #     else:
-        #         placeholder = 'offline file, contact administrator'
-        #     file_obj = StringIO(placeholder)
-        # child = self.children[file_name]
-        # child.name = file_name
-        # child.obj = file_obj
-
-        def add_unique_name(children, orig_name):
-            counter = 1
-            name = orig_name
-            while name in children:
-                counter += 1
-                name = '%s_%i' % (orig_name, counter)
-            return name, children[name]
-
-        if datafile.directory:
-            path = self.add_path(datafile.directory)
-            df_name, child = add_unique_name(path.children, df_name)
-        else:
-            df_name, child = add_unique_name(self.children, df_name)
-        child.name = df_name
-        child.obj = datafile
 
 
 class MyTSFTPServerInterface(SFTPServerInterface):

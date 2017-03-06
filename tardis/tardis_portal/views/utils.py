@@ -57,7 +57,7 @@ def _add_protocols_and_organizations(request, collection_object, c):
     c['default_format'] = filter(
         lambda x: not (cannot_do_zip and x == 'zip'), formats)[0]
 
-    from tardis.tardis_portal.download import get_download_organizations
+    from tardis.data_organisation.mapping_to_paths import get_download_organizations
     c['organization'] = get_download_organizations()
     c['default_organization'] = getattr(
         settings, 'DEFAULT_PATH_MAPPER', 'classic')

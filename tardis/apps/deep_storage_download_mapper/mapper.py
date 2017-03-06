@@ -35,7 +35,7 @@ def deep_storage_mapper(obj, rootdir=None):
                 desc = obj.description
             return quote("%s_%d" % (desc, obj.id), safe=safe)
         elif isinstance(obj, Experiment):
-            if settings.EXP_SPACES_TO_UNDERSCORES:
+            if getattr(settings, 'EXP_SPACES_TO_UNDERSCORES', False):
                 title = obj.title.replace(' ', '_')
             else:
                 title = obj.title
