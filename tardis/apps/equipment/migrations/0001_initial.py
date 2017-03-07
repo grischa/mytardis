@@ -7,7 +7,7 @@ from django.db import models, migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('tardis_portal', '0002_auto_20150528_1128'),
+        ('tardis_portal', '0001_squashed_0011_auto_20160505_1643'),
     ]
 
     operations = [
